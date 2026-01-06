@@ -1,20 +1,30 @@
 const supabase = require('../config/supabase');
 
-// 1. Get List of Users (ID & Full Name)
+// 1. Get List of Users (ID, Full Name, Email & Status)
 exports.getUsersList = async (req, res) => {
   try {
-    // Fetch minimal data: ID and Full Name (and email for reference)
+    // Fetch profiles AND join with the 'level' table
+    // Note: 'level(status)' fetches the status column from the related level table
     const { data: users, error } = await supabase
       .from('profiles')
-      .select('id, full_name, email') 
+      .select('id, full_name, email, level(status)') 
       .order('updated_at', { ascending: false });
 
     if (error) throw error;
 
+    // Format data to flatten the structure for the Frontend
+    // If a user has no row in 'level' table, we default to 'Reguler'
+    const formattedData = users.map(user => ({
+      id: user.id,
+      full_name: user.full_name,
+      email: user.email,
+      status: user.level ? user.level.status : 'Reguler' 
+    }));
+
     res.status(200).json({
       success: true,
-      count: users.length,
-      data: users
+      count: formattedData.length,
+      data: formattedData
     });
 
   } catch (err) {
@@ -30,7 +40,7 @@ exports.deleteUser = async (req, res) => {
   const { id } = req.params;
 
   try {
-    // Optional: Check if user exists first
+    // Check if user exists first
     const { data: existing, error: findError } = await supabase
       .from('profiles')
       .select('id')
@@ -45,6 +55,8 @@ exports.deleteUser = async (req, res) => {
     }
 
     // Execute Delete
+    // Note: Ensure your 'level', 'posts', etc. have ON DELETE CASCADE in SQL
+    // so this single delete cleans up everything.
     const { error } = await supabase
       .from('profiles')
       .delete()
