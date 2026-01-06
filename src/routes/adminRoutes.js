@@ -23,6 +23,7 @@ router.post('/login', adminController.loginAdmin);
 router.get('/whoami', protect, adminController.getMe);
 router.post('/logout', protect, adminController.logoutAdmin);
 router.delete('/:id', protect, adminController.deleteAdmin);
+router.get('/list', protect, adminController.getAdminsList); // <--- ADD THIS LINE// (You likely already have this)
 
 // --- User Management ---
 router.get('/users', protect, usersController.getUsersList);     

@@ -192,3 +192,28 @@ exports.logoutAdmin = async (req, res) => {
     });
   }
 };
+
+// NEW: Get List of All Admins
+exports.getAdminsList = async (req, res) => {
+  try {
+    // Select specific columns only (NEVER select password_hash)
+    const { data: admins, error } = await supabase
+      .from('admins')
+      .select('id, username, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    res.status(200).json({
+      success: true,
+      count: admins.length,
+      data: admins
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
